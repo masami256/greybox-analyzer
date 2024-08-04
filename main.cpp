@@ -3,6 +3,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/CodeGen/MIRParser/MIParser.h"
@@ -10,6 +11,7 @@
 #include "llvm/Support/FileSystem.h"
 
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 #include <vector>
 
@@ -49,6 +51,8 @@ int main(int argc, char **argv)
     }
 
     std::vector<std::string> bcfiles;
+    std::vector<std::string> functions;
+    std::vector<std::string> basicblocks;
 
     for (const auto& p : std::filesystem::recursive_directory_iterator(std::string(BCFileOutputDir))) {
 			if (!std::filesystem::is_directory(p)) {
@@ -60,6 +64,8 @@ int main(int argc, char **argv)
 	}
 
     for (const auto &f : bcfiles) {
+        BOOST_LOG_TRIVIAL(info) << "Analyzing " << f;
+
         LLVMContext *context = new LLVMContext();
         std::unique_ptr<Module> mod = parseIRFile(f, Err, *context);
 
@@ -90,15 +96,43 @@ int main(int argc, char **argv)
                 BOOST_LOG_TRIVIAL(warning) << "File " << f << " may not be built with debug option.";
                 continue;
             }
-            unsigned line = subprogram->getLine();
 
-            std::cout << "Source: " << m->getSourceFileName() << ", Function:" << functionName << ", Line: " << line << std::endl;
+            std::stringstream ss;
+            ss << m->getSourceFileName() << "," << functionName << "," << subprogram->getLine() << std::endl;
+            functions.push_back(ss.str());
+
+            for (auto &BB : *F) {
+                std::string BBName = BB.hasName() ? BB.getName().str() : "<unnamed>";
+                for (auto &Inst : BB) {
+                    if (llvm::DILocation *Loc = Inst.getDebugLoc()) {
+                        unsigned Line = Loc->getLine();
+                        llvm::StringRef File = Loc->getFilename();
+                        llvm::StringRef Directory = Loc->getDirectory();
+                        std::stringstream ss;
+                        ss << BBName << "," << Directory.str() << "/" << File.str() << "," << Line << std::endl;
+                        basicblocks.push_back(ss.str());
+                    }
+                }
+            }
         }
     }
 
     if (sys::fs::create_directory(outputdir)) {
         BOOST_LOG_TRIVIAL(error) << "Failed to create directory %s\n", outputdir;
         exit(1);
+    }
+
+    std::ofstream function_names_file(outputdir + "/functionNames.txt", std::ofstream::out);
+    std::ofstream basic_block_file(outputdir + "/basicblocks.txt", std::ofstream::out);
+
+    BOOST_LOG_TRIVIAL(info) << "Writing functionNames.txt";
+    for (const auto &s : functions) {
+        function_names_file << s;
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "Writing basicblocks.txt";
+    for (const auto &s : basicblocks) {
+        basic_block_file << s;
     }
     return 0;
 }
