@@ -39,6 +39,15 @@ static bool has_data(const std::vector<std::string> &v, const std::string &s)
     return it != v.end();
 }
 
+static void write_to_file(const std::vector<std::string> &v, const std::string &outputdir, const std::string &filename)
+{
+    BOOST_LOG_TRIVIAL(info) << "Write to " << outputdir << "/" << filename;
+    std::ofstream of(outputdir + "/" + filename, std::ofstream::out);
+    for (const auto &s : v) {
+        of << s;
+    }
+}
+
 int main(int argc, char **argv)
 {
     cl::ParseCommandLineOptions(argc, argv);
@@ -61,12 +70,12 @@ int main(int argc, char **argv)
     std::vector<std::string> basicblocks;
 
     for (const auto& p : std::filesystem::recursive_directory_iterator(std::string(BCFileOutputDir))) {
-			if (!std::filesystem::is_directory(p)) {
-					std::filesystem::path path = p.path();
-					if (boost::algorithm::ends_with(path.string(), ".bc")) {
-						bcfiles.push_back(path.string());
-					}
-			}
+        if (!std::filesystem::is_directory(p)) {
+            std::filesystem::path path = p.path();
+            if (boost::algorithm::ends_with(path.string(), ".bc")) {
+                bcfiles.push_back(path.string());
+            }
+        }
 	}
 
     for (const auto &f : bcfiles) {
@@ -75,7 +84,7 @@ int main(int argc, char **argv)
         LLVMContext *context = new LLVMContext();
         std::unique_ptr<Module> mod = parseIRFile(f, Err, *context);
 
-        if (mod == NULL) {
+        if (mod == nullptr) {
             BOOST_LOG_TRIVIAL(warning) << "File " << f << " is not LLVM IR bitcode file.";
             continue;
         }
@@ -87,7 +96,7 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            std::string functionName = static_cast<std::string>(F->getName());
+            std::string functionName = F->getName().str();
             if (functionName == "") {
                 continue;
             }
@@ -100,13 +109,15 @@ int main(int argc, char **argv)
             BOOST_LOG_TRIVIAL(info) << "Analyzing " << functionName;
 
             DISubprogram *subprogram = F->getSubprogram();
-            if (subprogram == NULL) {
+            if (subprogram == nullptr) {
                 BOOST_LOG_TRIVIAL(warning) << "File " << f << " may not be built with debug option.";
                 continue;
             }
 
+            DIFile *file = subprogram->getFile();
+
             std::stringstream ss;
-            ss << m->getSourceFileName() << "," << functionName << "," << subprogram->getLine() << std::endl;
+            ss << file->getDirectory().str() << "/" << file->getFilename().str() << "," << functionName << "," << subprogram->getLine() << std::endl;
             functions.push_back(ss.str());
 
             // Analyzing Basic Block
@@ -133,17 +144,9 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    std::ofstream function_names_file(outputdir + "/functionNames.txt", std::ofstream::out);
-    std::ofstream basic_block_file(outputdir + "/basicblocks.txt", std::ofstream::out);
+    write_to_file(functions, outputdir, "functionNames.txt");
+    write_to_file(basicblocks, outputdir, "basicblocks.txt");
 
-    BOOST_LOG_TRIVIAL(info) << "Writing functionNames.txt";
-    for (const auto &s : functions) {
-        function_names_file << s;
-    }
-
-    BOOST_LOG_TRIVIAL(info) << "Writing basicblocks.txt";
-    for (const auto &s : basicblocks) {
-        basic_block_file << s;
-    }
     return 0;
 }
+
