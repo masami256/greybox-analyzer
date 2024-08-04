@@ -1,0 +1,6 @@
+build/
+.vscode/
+*.bc
+*.ll
+*.o
+prog
