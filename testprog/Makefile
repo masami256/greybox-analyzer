@@ -2,13 +2,15 @@ target = prog
 
 CC = clang
 
-all:
-	${CC} -I. -g -emit-llvm  ${CFLAGS} -c ${target}.c -o ${target}.bc
-	${CC} -I. -g  ${CFLAGS} -c ${target}.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${target}.o -o ${target}
+objs = prog.o \
+	greeting.o
 
-cleanall:
-	rm -fr ${target} obj-aflgo *.bc *.txt *.o
+all: $(objs)
+	${CC} ${CFLAGS} ${LDFLAGS} ${objs} -o ${target}
+
+.c.o:
+	${CC} -I. -g -emit-llvm  ${CFLAGS} -c $< -o $(@:.o=).bc
+	${CC} -I. -g ${CFLAGS} -c $<
 
 clean:
 	rm -fr ${target} *.o *.bc

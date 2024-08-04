@@ -7,6 +7,7 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/CodeGen/MIRParser/MIParser.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <iostream>
 #include <filesystem>
@@ -17,21 +18,34 @@
 
 using namespace llvm;
 
-// Commandline options for Analyzer
+// Command line options for Analyzer
 static cl::opt<std::string> BCFileOutputDir(
     "bcfiles-dir",
     cl::desc("LLVM IR files output directory."),
     cl::value_desc("LLVM IR files output directory")
 );
 
+static cl::opt<std::string> OutputDir(
+    "output-dir",
+    cl::desc("Output directory for analyze results."),
+    cl::desc("Output directory for analyze results")
+);
+
 int main(int argc, char **argv)
 {
     cl::ParseCommandLineOptions(argc, argv);
     SMDiagnostic Err;
+    std::string outputdir;
 
     if (BCFileOutputDir.empty()) {
         BOOST_LOG_TRIVIAL(error) << "LLVM IR files output directory should be specified.";
         exit(1);
+    }
+
+    if (!OutputDir.empty()) {
+        outputdir = OutputDir;
+    } else {
+        outputdir = "ga-output";
     }
 
     std::vector<std::string> bcfiles;
@@ -80,6 +94,11 @@ int main(int argc, char **argv)
 
             std::cout << "Source: " << m->getSourceFileName() << ", Function:" << functionName << ", Line: " << line << std::endl;
         }
+    }
+
+    if (sys::fs::create_directory(outputdir)) {
+        BOOST_LOG_TRIVIAL(error) << "Failed to create directory %s\n", outputdir;
+        exit(1);
     }
     return 0;
 }
