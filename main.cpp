@@ -78,6 +78,11 @@ int main(int argc, char **argv)
         }
 	}
 
+    if (bcfiles.empty()) {
+        BOOST_LOG_TRIVIAL(warning) << ".bc file is not found.";
+        exit(1);
+    }
+
     for (const auto &f : bcfiles) {
         BOOST_LOG_TRIVIAL(info) << "Analyzing " << f;
 
@@ -102,9 +107,9 @@ int main(int argc, char **argv)
             }
 
             // Skip if it is definition only.
-            if (F->isDeclaration()) {
-                continue;
-            }
+            //if (F->isDeclaration()) {
+            //    continue;
+            //}
 
             BOOST_LOG_TRIVIAL(info) << "Analyzing " << functionName;
 
