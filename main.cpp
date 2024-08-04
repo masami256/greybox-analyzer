@@ -33,6 +33,12 @@ static cl::opt<std::string> OutputDir(
     cl::desc("Output directory for analyze results")
 );
 
+static bool has_data(const std::vector<std::string> &v, const std::string &s)
+{
+    auto it = std::find(v.begin(), v.end(), s);
+    return it != v.end();
+}
+
 int main(int argc, char **argv)
 {
     cl::ParseCommandLineOptions(argc, argv);
@@ -91,6 +97,8 @@ int main(int argc, char **argv)
                 continue;
             }
 
+            BOOST_LOG_TRIVIAL(info) << "Analyzing " << functionName;
+
             DISubprogram *subprogram = F->getSubprogram();
             if (subprogram == NULL) {
                 BOOST_LOG_TRIVIAL(warning) << "File " << f << " may not be built with debug option.";
@@ -101,6 +109,7 @@ int main(int argc, char **argv)
             ss << m->getSourceFileName() << "," << functionName << "," << subprogram->getLine() << std::endl;
             functions.push_back(ss.str());
 
+            // Analyzing Basic Block
             for (auto &BB : *F) {
                 std::string BBName = BB.hasName() ? BB.getName().str() : "<unnamed>";
                 for (auto &Inst : BB) {
@@ -110,7 +119,9 @@ int main(int argc, char **argv)
                         llvm::StringRef Directory = Loc->getDirectory();
                         std::stringstream ss;
                         ss << BBName << "," << Directory.str() << "/" << File.str() << "," << Line << std::endl;
-                        basicblocks.push_back(ss.str());
+                        if (!has_data(basicblocks, ss.str())) {
+                            basicblocks.push_back(ss.str());
+                        }
                     }
                 }
             }
