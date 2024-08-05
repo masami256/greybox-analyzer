@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <vector>
 
-#include <boost/log/trivial.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace llvm;
@@ -41,7 +40,7 @@ static bool has_data(const std::vector<std::string> &v, const std::string &s)
 
 static void write_to_file(const std::vector<std::string> &v, const std::string &outputdir, const std::string &filename)
 {
-    BOOST_LOG_TRIVIAL(info) << "Write to " << outputdir << "/" << filename;
+    llvm::outs() << "Write to " << outputdir << "/" << filename << "\n";
     std::ofstream of(outputdir + "/" + filename, std::ofstream::out);
     for (const auto &s : v) {
         of << s;
@@ -55,7 +54,7 @@ int main(int argc, char **argv)
     std::string outputdir;
 
     if (BCFileOutputDir.empty()) {
-        BOOST_LOG_TRIVIAL(error) << "LLVM IR files output directory should be specified.";
+        llvm::errs() << "LLVM IR files output directory should be specified.\n";
         exit(1);
     }
 
@@ -80,18 +79,18 @@ int main(int argc, char **argv)
 	}
 
     if (bcfiles.empty()) {
-        BOOST_LOG_TRIVIAL(warning) << ".bc file is not found.";
+        llvm::dbgs() << ".bc file is not found.\n";
         exit(1);
     }
 
     for (const auto &f : bcfiles) {
-        BOOST_LOG_TRIVIAL(info) << "Analyzing file:" << f;
+        llvm::outs() << "Analyzing file:" << f << "\n";
 
         LLVMContext *context = new LLVMContext();
         std::unique_ptr<Module> mod = parseIRFile(f, Err, *context);
 
         if (mod == nullptr) {
-            BOOST_LOG_TRIVIAL(warning) << "File " << f << " is not LLVM IR bitcode file.";
+            llvm::outs() << "File " << f << " is not LLVM IR bitcode file.\n";
             continue;
         }
 
@@ -112,11 +111,11 @@ int main(int argc, char **argv)
             //    continue;
             //}
 
-            BOOST_LOG_TRIVIAL(info) << "Analyzing function: " << functionName;
+            llvm::outs() << "Analyzing function: " << functionName << "\n";
 
             DISubprogram *subprogram = F->getSubprogram();
             if (subprogram == nullptr) {
-                BOOST_LOG_TRIVIAL(debug) << "File " << f << " may not be built with debug option.";
+                llvm::dbgs() << "File " << f << " may not be built with debug option.\n";
                 continue;
             }
 
@@ -146,7 +145,7 @@ int main(int argc, char **argv)
     }
 
     if (sys::fs::create_directory(outputdir)) {
-        BOOST_LOG_TRIVIAL(error) << "Failed to create directory %s\n", outputdir;
+        llvm::errs() << "Failed to create directory %s\n", outputdir;
         exit(1);
     }
 

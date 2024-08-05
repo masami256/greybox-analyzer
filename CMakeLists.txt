@@ -17,7 +17,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${LLVM_CMAKE_DIR})
 include(AddLLVM)
 
-find_package(Boost REQUIRED COMPONENTS system filesystem log)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(LLVM_LINK_COMPONENTS
@@ -27,4 +27,10 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_executable(analyzer
   main.cpp)
 
-target_link_libraries(analyzer PRIVATE ${Boost_LIBRARIES} ${LLVM_LIBRARIES})
+option(BUILD_ON_UBUNTU "Build on ubuntu" OFF)
+if (BUILD_ON_UBUNTU)
+  llvm_map_components_to_libnames(LLVM_LINK_LIBS core support irreader)
+else()
+  set(LLVM_LINK_LIBS ${LLVM_LIBRARIES})
+endif()
+target_link_libraries(analyzer PRIVATE ${Boost_LIBRARIES} ${LLVM_LINK_LIBS})
