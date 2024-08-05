@@ -47,6 +47,15 @@ static void write_to_file(const std::vector<std::string> &v, const std::string &
     }
 }
 
+static void add_basic_block(std::vector<std::string>& v, unsigned line, const StringRef& file, const StringRef& dir)
+{
+    std::stringstream ss;
+    ss << dir.str() << "/" << file.str() << "," << line << std::endl;
+    if (!has_data(v, ss.str())) {
+        v.push_back(ss.str());
+    }
+}
+
 int main(int argc, char **argv)
 {
     cl::ParseCommandLineOptions(argc, argv);
@@ -87,60 +96,47 @@ int main(int argc, char **argv)
         llvm::outs() << "Analyzing file:" << f << "\n";
 
         LLVMContext *context = new LLVMContext();
-        std::unique_ptr<Module> mod = parseIRFile(f, Err, *context);
+        std::unique_ptr<Module> M = parseIRFile(f, Err, *context);
 
-        if (mod == nullptr) {
+        if (M == nullptr) {
             llvm::outs() << "File " << f << " is not LLVM IR bitcode file.\n";
             continue;
         }
 
-        Module *m = mod.release();
-        for (auto it = m->begin(); it != m->end(); it++) {
-            Function *F = &*it;
-            if (!F->hasName()) {
+        for (const Function &F : *M) {
+            if (!F.hasName()) {
                 continue;
             }
 
-            std::string functionName = F->getName().str();
+            std::string functionName = F.getName().str();
             if (functionName == "") {
                 continue;
             }
 
-            // Skip if it is definition only.
-            //if (F->isDeclaration()) {
-            //    continue;
-            //}
-
             llvm::outs() << "Analyzing function: " << functionName << "\n";
 
-            DISubprogram *subprogram = F->getSubprogram();
+            // Get BasicBlock information
+            DISubprogram *subprogram = F.getSubprogram();
             if (subprogram == nullptr) {
                 llvm::dbgs() << "File " << f << " may not be built with debug option.\n";
                 continue;
             }
 
-            DIFile *file = subprogram->getFile();
+            add_basic_block(basicblocks, subprogram->getLine(), subprogram->getFilename(), subprogram->getDirectory());
+            
+            for (auto &BB : F) {
+                const Instruction &firstInst = *BB.begin();
+                const DILocation *Loc = firstInst.getDebugLoc();
+                if (Loc != nullptr) {
+                    add_basic_block(basicblocks, Loc->getLine(), Loc->getFilename(), Loc->getDirectory());
+                }
+            }
 
+            // Get function information
+            DIFile *file = subprogram->getFile();
             std::stringstream ss;
             ss << file->getDirectory().str() << "/" << file->getFilename().str() << "," << functionName << "," << subprogram->getLine() << std::endl;
             functions.push_back(ss.str());
-
-            // Analyzing Basic Block
-            for (auto &BB : *F) {
-                std::string BBName = BB.hasName() ? BB.getName().str() : "<unnamed>";
-                for (auto &Inst : BB) {
-                    if (llvm::DILocation *Loc = Inst.getDebugLoc()) {
-                        unsigned Line = Loc->getLine();
-                        llvm::StringRef File = Loc->getFilename();
-                        llvm::StringRef Directory = Loc->getDirectory();
-                        std::stringstream ss;
-                        ss << BBName << "," << Directory.str() << "/" << File.str() << "," << Line << std::endl;
-                        if (!has_data(basicblocks, ss.str())) {
-                            basicblocks.push_back(ss.str());
-                        }
-                    }
-                }
-            }
         }
     }
 
