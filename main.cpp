@@ -73,6 +73,7 @@ int main(int argc, char **argv)
         if (!std::filesystem::is_directory(p)) {
             std::filesystem::path path = p.path();
             if (boost::algorithm::ends_with(path.string(), ".bc")) {
+                std::cout << "Add " << path.string() << std::endl;
                 bcfiles.push_back(path.string());
             }
         }
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
     }
 
     for (const auto &f : bcfiles) {
-        BOOST_LOG_TRIVIAL(info) << "Analyzing " << f;
+        BOOST_LOG_TRIVIAL(info) << "Analyzing file:" << f;
 
         LLVMContext *context = new LLVMContext();
         std::unique_ptr<Module> mod = parseIRFile(f, Err, *context);
@@ -111,11 +112,11 @@ int main(int argc, char **argv)
             //    continue;
             //}
 
-            BOOST_LOG_TRIVIAL(info) << "Analyzing " << functionName;
+            BOOST_LOG_TRIVIAL(info) << "Analyzing function: " << functionName;
 
             DISubprogram *subprogram = F->getSubprogram();
             if (subprogram == nullptr) {
-                BOOST_LOG_TRIVIAL(warning) << "File " << f << " may not be built with debug option.";
+                BOOST_LOG_TRIVIAL(debug) << "File " << f << " may not be built with debug option.";
                 continue;
             }
 
