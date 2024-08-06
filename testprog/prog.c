@@ -24,7 +24,8 @@ int main(int argc, char **argv)
 	if (!strcmp(argv[1], "hello"))
 		print_hello();
 
-	greeting(argv[1]);
+	void (*f)(char *) = greeting;
+	f(argv[1]);
 
 	return 0;
 }
