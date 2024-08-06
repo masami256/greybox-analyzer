@@ -166,7 +166,7 @@ int main(int argc, char **argv)
                         
                             if (calledF != "llvm.dbg.declare") {
                                 std::stringstream ss;
-                                ss << current_file << ":" << dl.getLine() << ":" << calledF << "\n";
+                                ss << current_dir << "/" << ":" << dl.getLine() << ":" << calledF << "\n";
                                 if (!has_data(functioncalls, ss.str())) {
                                     functioncalls.push_back(ss.str());
                                 }
