@@ -53,7 +53,7 @@ static void write_to_file(const std::vector<std::string> &v, const std::string &
 static void add_basic_block(std::vector<std::string>& v, unsigned line, const std::string& file, const std::string& dir)
 {
     std::stringstream ss;
-    ss << dir << "/" << file << ":" << line << std::endl;
+    ss << dir << "/" << file << ":" << line << ":" << std::endl;
     if (!has_data(v, ss.str())) {
         v.push_back(ss.str());
     }
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
                         
                             if (calledF != "llvm.dbg.declare") {
                                 std::stringstream ss;
-                                ss << current_dir << "/" << ":" << dl.getLine() << ":" << calledF << "\n";
+                                ss << current_dir << "/" << ":" << dl.getLine() << "," << calledF << "\n";
                                 if (!has_data(functioncalls, ss.str())) {
                                     functioncalls.push_back(ss.str());
                                 }
