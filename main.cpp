@@ -190,9 +190,9 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    write_to_file(functions, outputdir, "functionNames.txt");
-    write_to_file(basicblocks, outputdir, "basicblocks.txt");
-    write_to_file(functioncalls, outputdir, "functioncalls.txt");
+    write_to_file(functions, outputdir, "Fnames.txt");
+    write_to_file(basicblocks, outputdir, "BBnames.txt");
+    write_to_file(functioncalls, outputdir, "BBcalls.txt");
 
     return 0;
 }
