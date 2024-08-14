@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 extern void greeting(char *arg);
 
@@ -11,21 +12,17 @@ void print_hello(void)
 
 int main(int argc, char **argv)
 {
-	if (argc != 2) {
-		printf("Usage: %s <string>\n", argv[0]);
-		exit(1);
-	}
+	char buf[64] = { 0 };
 
-	FILE *fp = fopen("/tmp/prog.txt", "w+");
+	printf("Input: ");
+	fflush(stdout);
+	read(fileno(stdin), buf, sizeof(buf) - 1);
 
-	fprintf(fp, "input: %s\n", argv[1]);
-	fclose(fp);
-
-	if (!strcmp(argv[1], "hello"))
+	if (!strcmp(buf, "hello"))
 		print_hello();
 
 	void (*f)(char *) = greeting;
-	f(argv[1]);
+	f(buf);
 
 	return 0;
 }
