@@ -1,0 +1,21 @@
+TARGET := prog
+
+BUILDDIR := build
+
+SRCS := prog.c greeting.c
+OBJS := $(SRCS:%.c=$(BUILDDIR)/%.o)
+
+all: $(BUILDDIR)/$(TARGET)
+
+$(BUILDDIR)/$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+$(BUILDDIR)/%.o: %.c | $(BUILDDIR)
+	$(CC) -I. -g $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
+clean:
+	rm -fr $(BUILDDIR)
+
