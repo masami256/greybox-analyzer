@@ -12,6 +12,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Analysis/CFGPrinter.h"
 
 #include <iostream>
 #include <fstream>
@@ -81,6 +82,11 @@ int main(int argc, char **argv)
         outputdir = OutputDir;
     } else {
         outputdir = "ga-output";
+    }
+
+    if (sys::fs::create_directory(outputdir)) {
+        llvm::errs() << "Failed to create directory %s\n", outputdir;
+        exit(1);
     }
 
     std::vector<std::string> bcfiles;
@@ -182,12 +188,17 @@ int main(int argc, char **argv)
             std::stringstream ss;
             ss << file->getDirectory().str() << "/" << file->getFilename().str() << ":" << functionName << ":" << subprogram->getLine() << std::endl;
             functions.push_back(ss.str());
-        }
-    }
 
-    if (sys::fs::create_directory(outputdir)) {
-        llvm::errs() << "Failed to create directory %s\n", outputdir;
-        exit(1);
+            // Write cfg file
+            std::string dotfiles = outputdir;
+            std::string funcName = F.getName().str();
+            std::string cfgFileName = dotfiles + "/cfg." + funcName + ".dot";
+            std::error_code EC;
+            raw_fd_ostream cfgFile(cfgFileName, EC, sys::fs::F_None);
+            if (!EC) {
+                WriteGraph(cfgFile, &F, true);
+            }
+        }
     }
 
     write_to_file(functions, outputdir, "Fnames.txt");
