@@ -30,6 +30,7 @@ add_llvm_executable(analyzer
 option(BUILD_ON_UBUNTU "Build on ubuntu" OFF)
 if (BUILD_ON_UBUNTU)
   llvm_map_components_to_libnames(LLVM_LINK_LIBS core support irreader)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_LLVM11")
 else()
   set(LLVM_LINK_LIBS ${LLVM_LIBRARIES})
 endif()

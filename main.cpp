@@ -12,7 +12,12 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+
+#ifdef USE_LLVM11
 #include "llvm/Analysis/CFGPrinter.h"
+#else
+#include "llvm/Support/GraphWriter.h"
+#endif // USE_LLVM11
 
 #include <iostream>
 #include <fstream>
@@ -194,7 +199,13 @@ int main(int argc, char **argv)
             std::string funcName = F.getName().str();
             std::string cfgFileName = dotfiles + "/cfg." + funcName + ".dot";
             std::error_code EC;
-            raw_fd_ostream cfgFile(cfgFileName, EC, sys::fs::F_None);
+
+#ifdef USE_LLVM11
+            llvm::sys::fs::OpenFlags f_none = sys::fs::F_None;
+#else
+            llvm::sys::fs::OpenFlags f_none = sys::fs::OF_None;
+#endif // USE_LLVM11
+            raw_fd_ostream cfgFile(cfgFileName, EC, f_none);
             if (!EC) {
                 WriteGraph(cfgFile, &F, true);
             }
