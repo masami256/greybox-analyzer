@@ -1,6 +1,8 @@
 build/
 .vscode/
 ga-output/
+testprog/obj-aflgo/
+testprog/build/
 *.bc
 *.ll
 *.o
