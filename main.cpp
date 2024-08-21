@@ -94,6 +94,12 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    std::string dotfilesdir = outputdir + "/dot-files";
+    if (sys::fs::create_directory(dotfilesdir)) {
+        llvm::errs() << "Failed to create directory %s\n", dotfilesdir;
+        exit(1);
+    }
+
     std::vector<std::string> bcfiles;
     std::vector<std::string> functions;
     std::vector<std::string> basicblocks;
@@ -195,9 +201,8 @@ int main(int argc, char **argv)
             functions.push_back(ss.str());
 
             // Write cfg file
-            std::string dotfiles = outputdir;
             std::string funcName = F.getName().str();
-            std::string cfgFileName = dotfiles + "/cfg." + funcName + ".dot";
+            std::string cfgFileName = dotfilesdir + "/cfg." + funcName + ".dot";
             std::error_code EC;
 
 #ifdef USE_LLVM11
