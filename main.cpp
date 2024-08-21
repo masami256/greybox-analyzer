@@ -208,7 +208,7 @@ int main(int argc, char **argv)
             raw_fd_ostream cfgFile(cfgFileName, EC, f_none);
             if (!EC) {
                 std::stringstream ss;
-                ss << "CFG for " << functionName << " function";
+                ss << "CFG for " << "'" << functionName << "'" << " function";
                 std::cout << ss.str() << std::endl;
                 std::string title(ss.str());
                 Twine twine(title);
