@@ -24,6 +24,8 @@ set(LLVM_LINK_COMPONENTS
     Analysis
     Support)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 add_llvm_executable(analyzer
   main.cpp)
 
